@@ -1,14 +1,15 @@
-class ZCL_GIT_TEST1 definition
-  public
-  final
-  create public .
+CLASS zcl_git_test1 DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC .
 
-public section.
-protected section.
-private section.
+  PUBLIC SECTION.
+  DATA: SV_DATA TYPE CHAR1.
+  PROTECTED SECTION.
+  PRIVATE SECTION.
 ENDCLASS.
 
 
 
-CLASS ZCL_GIT_TEST1 IMPLEMENTATION.
+CLASS zcl_git_test1 IMPLEMENTATION.
 ENDCLASS.
