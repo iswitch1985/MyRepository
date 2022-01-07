@@ -1,1 +1,92 @@
+******************
+*1. to define following objects
+DATA: go_splitter       TYPE REF TO cl_gui_splitter_container, " if you want to output alv header, you should use splitter
+      go_container_parent TYPE REF TO cl_gui_custom_container, " this is the parent container to contain text and alv
+      go_container_text TYPE REF TO cl_gui_container,          " header text container
+      go_doc            TYPE REF TO cl_dd_document,            " Header text should be a document object
+      go_container_alv  TYPE REF TO cl_gui_container,          " ALV CONTAINER
+      go_grid           TYPE REF TO cl_gui_alv_grid.           " ALV object
+      
+*2. to define event TOP_OF_PAGE in local handler class
+    METHODS handle_on_top_page FOR EVENT top_of_page OF cl_gui_alv_grid
+      IMPORTING
+          e_dyndoc_id.
 
+*3. to implement this method
+  METHOD handle_on_top_page.
+    CALL METHOD go_doc->add_text
+      EXPORTING
+        text         = '毛占用数量：当前工单基本开始日期之前的所有未TECO的工单预留需求'
+        sap_emphasis = cl_dd_area=>heading
+        sap_color    = cl_dd_area=>list_heading_int.
+    CALL METHOD go_doc->new_line.
+    " should call below FM
+    CALL FUNCTION 'REUSE_ALV_GRID_COMMENTARY_SET'
+      EXPORTING
+        document       = go_doc
+        bottom         = abap_false
+              .
+    " should call following method to display header text
+    go_doc->display_document(
+      EXPORTING
+        reuse_control      = abap_true
+        parent             = go_container_text
+    ).
+  ENDMETHOD.
+  
+*4. to initial ALV container
+    CREATE OBJECT go_container_parent
+      EXPORTING
+        container_name = 'AREA100'.
+
+    CREATE OBJECT go_splitter
+      EXPORTING
+        parent            = go_container_parent
+        rows              = 2
+        columns           = 1
+      EXCEPTIONS
+        cntl_error        = 1
+        cntl_system_error = 2
+        OTHERS            = 3.
+*    container for text
+    go_splitter->get_container(
+      EXPORTING
+        row       = 1
+        column    = 1
+      RECEIVING
+        container = go_container_text
+    ).
+*    set height
+    go_splitter->set_row_height(
+      EXPORTING
+        id                = 1
+        height            = 12
+      EXCEPTIONS
+        cntl_error        = 1
+        cntl_system_error = 2
+        OTHERS            = 3
+    ).
+*    container for ALV
+    go_splitter->get_container(
+      EXPORTING
+        row       = 2
+        column    = 1
+      RECEIVING
+        container = go_container_alv
+    ).
+    CREATE OBJECT go_grid
+      EXPORTING
+        i_parent = go_container_alv.
+
+    CREATE OBJECT go_doc
+      EXPORTING
+        style = 'ALV_GRID'.
+
+  SET HANDLER g_event->handle_on_top_page  FOR go_grid.
+  CALL METHOD go_grid->set_table_for_first_display
+    go_doc->initialize_document( ).
+    
+    go_grid->list_processing_events(
+      EXPORTING
+        i_event_name      = 'TOP_OF_PAGE'
+        i_dyndoc_id       = go_doc
